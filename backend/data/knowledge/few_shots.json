@@ -1,0 +1,464 @@
+{
+  "metadata": {
+    "name": "manufacturing_nl2sql_few_shot",
+    "description": "Few-shot examples for lightweight NL2SQL system on manufacturing/supply-chain schema.",
+    "sql_dialect": "SQLite",
+    "usage": "Retrieve 1-3 examples by difficulty, intent_tags and pattern before SQL generation.",
+    "hard_rules": [
+      "Only generate executable SQLite SELECT SQL.",
+      "Use only tables and columns provided by schema retrieval.",
+      "Date keys are stored as YYYYMMDD text, month keys as YYYYMM.",
+      "When using two fact tables in one query, aggregate each fact table to the common business grain before joining.",
+      "When question contains 每个/各/分别 + ranking/topN, use ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...).",
+      "For 有效订单, join code_sales_order_status and filter is_valid_order = 1.",
+      "For 最新价格, use latest eff_start_dt not later than the target date."
+    ]
+  },
+  "examples": [
+    {
+      "id": "L1_001",
+      "question": "请统计2025年3月销售订单总数。",
+      "difficulty": "L1",
+      "pattern": "simple_count_with_date_filter",
+      "intent_tags": [
+        "basic_lookup"
+      ],
+      "sql_features": [
+        "count",
+        "filter"
+      ],
+      "tables": [
+        "fact_sales_order_hdr"
+      ],
+      "join_paths": [],
+      "sql": "SELECT COUNT(*) AS order_count FROM fact_sales_order_hdr WHERE order_date_key BETWEEN '20250301' AND '20250331';"
+    },
+    {
+      "id": "L1_002",
+      "question": "请统计2025年3月销售订单行的总订单数量。",
+      "difficulty": "L1",
+      "pattern": "simple_sum_header_line_join",
+      "intent_tags": [
+        "basic_lookup",
+        "aggregation"
+      ],
+      "sql_features": [
+        "sum",
+        "join",
+        "filter"
+      ],
+      "tables": [
+        "fact_sales_order_hdr",
+        "fact_sales_order_line"
+      ],
+      "join_paths": [
+        "fact_sales_order_hdr.sales_order_id = fact_sales_order_line.sales_order_id"
+      ],
+      "sql": "SELECT SUM(l.order_qty) AS total_order_qty FROM fact_sales_order_hdr h JOIN fact_sales_order_line l ON h.sales_order_id = l.sales_order_id WHERE h.order_date_key BETWEEN '20250301' AND '20250331';"
+    },
+    {
+      "id": "L1_003",
+      "question": "2025年3月总产量是多少？",
+      "difficulty": "L1",
+      "pattern": "daily_fact_sum",
+      "intent_tags": [
+        "basic_lookup",
+        "production"
+      ],
+      "sql_features": [
+        "sum",
+        "filter"
+      ],
+      "tables": [
+        "fact_prod_output_dly"
+      ],
+      "join_paths": [],
+      "sql": "SELECT SUM(good_qty) AS total_output_qty FROM fact_prod_output_dly WHERE output_dt_key BETWEEN '20250301' AND '20250331';"
+    },
+    {
+      "id": "L1_004",
+      "question": "请统计2025年3月检验总数量和拒收总数量。",
+      "difficulty": "L1",
+      "pattern": "multiple_metric_sum",
+      "intent_tags": [
+        "basic_lookup",
+        "quality_analysis"
+      ],
+      "sql_features": [
+        "sum",
+        "filter"
+      ],
+      "tables": [
+        "fact_qa_inspection"
+      ],
+      "join_paths": [],
+      "sql": "SELECT SUM(inspected_qty) AS total_inspected_qty, SUM(reject_qty) AS total_reject_qty FROM fact_qa_inspection WHERE inspection_dt_key BETWEEN '20250301' AND '20250331';"
+    },
+    {
+      "id": "L2_001",
+      "question": "2025年第一季度哪个客户细分的有效订单数量最高？",
+      "difficulty": "L2",
+      "pattern": "business_rule_code_table_groupby",
+      "intent_tags": [
+        "join_understanding",
+        "code_translation",
+        "business_rule"
+      ],
+      "sql_features": [
+        "group_by",
+        "join",
+        "order_by"
+      ],
+      "tables": [
+        "fact_sales_order_hdr",
+        "code_sales_order_status",
+        "dim_customer"
+      ],
+      "join_paths": [
+        "fact_sales_order_hdr.sales_order_status_cd = code_sales_order_status.sales_order_status_cd",
+        "fact_sales_order_hdr.customer_id = dim_customer.customer_id"
+      ],
+      "sql": "SELECT c.cust_segment_cd, COUNT(DISTINCT h.sales_order_id) AS valid_order_count FROM fact_sales_order_hdr h JOIN code_sales_order_status s ON h.sales_order_status_cd = s.sales_order_status_cd JOIN dim_customer c ON h.customer_id = c.customer_id WHERE h.order_date_key BETWEEN '20250101' AND '20250331' AND s.is_valid_order = 1 GROUP BY c.cust_segment_cd ORDER BY valid_order_count DESC LIMIT 1;"
+    },
+    {
+      "id": "L2_002",
+      "question": "请找出2025年3月最新生效的智能控制器A100标准售价。",
+      "difficulty": "L2",
+      "pattern": "latest_record_before_target_date",
+      "intent_tags": [
+        "business_rule",
+        "latest_record"
+      ],
+      "sql_features": [
+        "subquery",
+        "max",
+        "join"
+      ],
+      "tables": [
+        "fact_price_book",
+        "dim_material"
+      ],
+      "join_paths": [
+        "fact_price_book.material_id = dim_material.material_id"
+      ],
+      "sql": "SELECT m.material_sku, m.material_nm, p.unit_price_amt, p.eff_start_dt FROM fact_price_book p JOIN dim_material m ON p.material_id = m.material_id WHERE m.material_sku = 'FG-A100' AND p.price_type_cd = 'STD' AND p.price_status_cd = 'ACTIVE' AND p.customer_id IS NULL AND p.eff_start_dt = (SELECT MAX(p2.eff_start_dt) FROM fact_price_book p2 WHERE p2.material_id = p.material_id AND p2.price_type_cd = 'STD' AND p2.price_status_cd = 'ACTIVE' AND p2.customer_id IS NULL AND p2.eff_start_dt <= '20250331');"
+    },
+    {
+      "id": "L2_003",
+      "question": "颜色为红色且电压为220V的成品有哪些？请返回物料编码和名称。",
+      "difficulty": "L2",
+      "pattern": "eav_self_join",
+      "intent_tags": [
+        "eav_lookup",
+        "semantic_mapping"
+      ],
+      "sql_features": [
+        "self_join",
+        "filter",
+        "join"
+      ],
+      "tables": [
+        "dim_material",
+        "eav_material_attr"
+      ],
+      "join_paths": [
+        "eav_material_attr.material_id = dim_material.material_id"
+      ],
+      "sql": "SELECT m.material_sku, m.material_nm FROM dim_material m JOIN eav_material_attr color_attr ON m.material_id = color_attr.material_id JOIN eav_material_attr voltage_attr ON m.material_id = voltage_attr.material_id WHERE m.material_type_cd = 'FG' AND color_attr.attr_nm = 'color' AND lower(color_attr.attr_value) = 'red' AND voltage_attr.attr_nm = 'voltage' AND voltage_attr.attr_value = '220';"
+    },
+    {
+      "id": "L2_004",
+      "question": "请计算智能控制器A100当前BOM版本中每生产1台需要多少个组件，并列出各组件用量。",
+      "difficulty": "L2",
+      "pattern": "current_bom_component",
+      "intent_tags": [
+        "bom_reasoning",
+        "join_understanding"
+      ],
+      "sql_features": [
+        "join",
+        "filter",
+        "order_by"
+      ],
+      "tables": [
+        "dim_bom_hdr",
+        "bridge_bom_component",
+        "dim_material"
+      ],
+      "join_paths": [
+        "dim_bom_hdr.parent_material_id = dim_material.material_id",
+        "bridge_bom_component.bom_id = dim_bom_hdr.bom_id",
+        "bridge_bom_component.component_material_id = dim_material.material_id"
+      ],
+      "sql": "SELECT c.material_id AS component_material_id, c.material_sku AS component_sku, c.material_nm AS component_name, b.component_qty AS component_qty_per_unit FROM dim_bom_hdr h JOIN dim_material p ON p.material_id = h.parent_material_id JOIN bridge_bom_component b ON b.bom_id = h.bom_id JOIN dim_material c ON c.material_id = b.component_material_id WHERE h.is_current_ver = 1 AND p.material_sku = 'FG-A100' ORDER BY b.bom_comp_id;"
+    },
+    {
+      "id": "L2_005",
+      "question": "哪些销售订单在2025年3月被取消，但其订单行数量仍然大于100？请返回订单号和订单数量。",
+      "difficulty": "L2",
+      "pattern": "cancelled_order_with_line_sum",
+      "intent_tags": [
+        "hidden_filter",
+        "non_standard_date"
+      ],
+      "sql_features": [
+        "join",
+        "filter",
+        "having"
+      ],
+      "tables": [
+        "fact_sales_order_hdr",
+        "fact_sales_order_line",
+        "code_sales_order_status"
+      ],
+      "join_paths": [
+        "fact_sales_order_hdr.sales_order_id = fact_sales_order_line.sales_order_id",
+        "fact_sales_order_hdr.sales_order_status_cd = code_sales_order_status.sales_order_status_cd"
+      ],
+      "sql": "SELECT h.sales_order_id, SUM(l.order_qty) AS order_qty FROM fact_sales_order_hdr h JOIN fact_sales_order_line l ON h.sales_order_id = l.sales_order_id JOIN code_sales_order_status s ON h.sales_order_status_cd = s.sales_order_status_cd WHERE h.order_date_key BETWEEN '20250301' AND '20250331' AND s.sales_order_status_nm = '已取消' GROUP BY h.sales_order_id HAVING SUM(l.order_qty) > 100 ORDER BY order_qty DESC;"
+    },
+    {
+      "id": "L3_001",
+      "question": "2025年3月各生产线总产量排名前3的是哪些？",
+      "difficulty": "L3",
+      "pattern": "topn_per_group_with_partition",
+      "intent_tags": [
+        "advanced_analytics",
+        "ranking"
+      ],
+      "sql_features": [
+        "group_by",
+        "window_function",
+        "partition",
+        "ranking"
+      ],
+      "tables": [
+        "fact_prod_output_dly",
+        "dim_prod_line",
+        "dim_material"
+      ],
+      "join_paths": [
+        "fact_prod_output_dly.prod_line_id = dim_prod_line.prod_line_id",
+        "fact_prod_output_dly.material_id = dim_material.material_id"
+      ],
+      "sql": "WITH line_material_output AS (SELECT l.prod_line_nm, m.material_sku, m.material_nm, SUM(o.good_qty) AS total_output_qty FROM fact_prod_output_dly o JOIN dim_prod_line l ON o.prod_line_id = l.prod_line_id JOIN dim_material m ON o.material_id = m.material_id WHERE o.output_dt_key BETWEEN '20250301' AND '20250331' GROUP BY l.prod_line_nm, m.material_sku, m.material_nm), ranked AS (SELECT prod_line_nm, material_sku, material_nm, total_output_qty, ROW_NUMBER() OVER (PARTITION BY prod_line_nm ORDER BY total_output_qty DESC) AS rn FROM line_material_output) SELECT prod_line_nm, material_sku, material_nm, total_output_qty, rn FROM ranked WHERE rn <= 3 ORDER BY prod_line_nm, rn;"
+    },
+    {
+      "id": "L3_002",
+      "question": "与2025年2月相比，2025年3月产量增长最多的生产线是哪条，增长了多少？",
+      "difficulty": "L3",
+      "pattern": "period_compare_by_group",
+      "intent_tags": [
+        "advanced_analytics",
+        "lag"
+      ],
+      "sql_features": [
+        "cte",
+        "aggregation",
+        "comparison"
+      ],
+      "tables": [
+        "fact_prod_output_dly",
+        "dim_prod_line"
+      ],
+      "join_paths": [
+        "fact_prod_output_dly.prod_line_id = dim_prod_line.prod_line_id"
+      ],
+      "sql": "WITH monthly AS (SELECT prod_line_id, substr(output_dt_key, 1, 6) AS month_key, SUM(good_qty) AS total_output_qty FROM fact_prod_output_dly WHERE output_dt_key BETWEEN '20250201' AND '20250331' GROUP BY prod_line_id, substr(output_dt_key, 1, 6)), pivoted AS (SELECT prod_line_id, SUM(CASE WHEN month_key = '202502' THEN total_output_qty ELSE 0 END) AS feb_qty, SUM(CASE WHEN month_key = '202503' THEN total_output_qty ELSE 0 END) AS mar_qty FROM monthly GROUP BY prod_line_id) SELECT l.prod_line_nm, mar_qty - feb_qty AS growth_qty FROM pivoted p JOIN dim_prod_line l ON p.prod_line_id = l.prod_line_id ORDER BY growth_qty DESC LIMIT 1;"
+    },
+    {
+      "id": "L3_003",
+      "question": "请统计2025年一季度每个月的总产量，并计算月环比增量。",
+      "difficulty": "L3",
+      "pattern": "monthly_lag",
+      "intent_tags": [
+        "time_series",
+        "lag"
+      ],
+      "sql_features": [
+        "group_by",
+        "lag",
+        "order_by"
+      ],
+      "tables": [
+        "fact_prod_output_dly"
+      ],
+      "join_paths": [],
+      "sql": "WITH monthly_output AS (SELECT substr(output_dt_key, 1, 6) AS month_key, SUM(good_qty) AS total_output_qty FROM fact_prod_output_dly WHERE output_dt_key BETWEEN '20250101' AND '20250331' GROUP BY substr(output_dt_key, 1, 6)) SELECT month_key, total_output_qty, total_output_qty - LAG(total_output_qty) OVER (ORDER BY month_key) AS mom_increment FROM monthly_output ORDER BY month_key;"
+    },
+    {
+      "id": "L3_004",
+      "question": "请找出2025年3月检验中拒收率最高的检验单，并给出拒收率。",
+      "difficulty": "L3",
+      "pattern": "derived_metric_ratio",
+      "intent_tags": [
+        "quality_analysis",
+        "derived_metric"
+      ],
+      "sql_features": [
+        "computed_metric",
+        "order_by"
+      ],
+      "tables": [
+        "fact_qa_inspection"
+      ],
+      "join_paths": [],
+      "sql": "SELECT inspection_id, inspected_qty, reject_qty, 1.0 * reject_qty / NULLIF(inspected_qty, 0) AS reject_rate FROM fact_qa_inspection WHERE inspection_dt_key BETWEEN '20250301' AND '20250331' ORDER BY reject_rate DESC LIMIT 1;"
+    },
+    {
+      "id": "L3_005",
+      "question": "在当前BOM中，哪些成品的组件数最多？请返回成品名称和组件数量前3名。",
+      "difficulty": "L3",
+      "pattern": "bom_component_count_ranking",
+      "intent_tags": [
+        "bom_reasoning",
+        "ranking"
+      ],
+      "sql_features": [
+        "join",
+        "group_by",
+        "window_function"
+      ],
+      "tables": [
+        "dim_bom_hdr",
+        "bridge_bom_component",
+        "dim_material"
+      ],
+      "join_paths": [
+        "dim_bom_hdr.bom_id = bridge_bom_component.bom_id",
+        "dim_bom_hdr.parent_material_id = dim_material.material_id"
+      ],
+      "sql": "WITH component_count AS (SELECT p.material_nm AS parent_material_name, COUNT(*) AS component_count FROM dim_bom_hdr h JOIN dim_material p ON h.parent_material_id = p.material_id JOIN bridge_bom_component b ON h.bom_id = b.bom_id WHERE h.is_current_ver = 1 GROUP BY p.material_nm), ranked AS (SELECT parent_material_name, component_count, ROW_NUMBER() OVER (ORDER BY component_count DESC) AS rn FROM component_count) SELECT parent_material_name, component_count FROM ranked WHERE rn <= 3 ORDER BY rn;"
+    },
+    {
+      "id": "L4_001",
+      "question": "2025年3月末哪个成品库存缺口最大？库存缺口定义为分厂预测量减去可用库存，其中可用库存=在手-已分配。",
+      "difficulty": "L4",
+      "pattern": "fact_fact_grain_alignment",
+      "intent_tags": [
+        "inventory_reasoning",
+        "business_formula"
+      ],
+      "sql_features": [
+        "join",
+        "aggregation",
+        "derived_metric",
+        "cte"
+      ],
+      "tables": [
+        "fact_forecast_mth",
+        "fact_inv_balance_snap",
+        "dim_wh",
+        "dim_material"
+      ],
+      "join_paths": [
+        "fact_inv_balance_snap.wh_id = dim_wh.wh_id",
+        "fact_forecast_mth.plant_id = dim_wh.plant_id",
+        "fact_forecast_mth.material_id = fact_inv_balance_snap.material_id",
+        "fact_forecast_mth.material_id = dim_material.material_id"
+      ],
+      "sql": "WITH forecast AS (SELECT material_id, plant_id, SUM(forecast_qty) AS forecast_qty FROM fact_forecast_mth WHERE month_key = '202503' GROUP BY material_id, plant_id), inventory AS (SELECT i.material_id, w.plant_id, SUM(i.on_hand_qty - i.alloc_qty) AS available_qty FROM fact_inv_balance_snap i JOIN dim_wh w ON i.wh_id = w.wh_id WHERE i.snap_dt_key = '20250331' GROUP BY i.material_id, w.plant_id), gap_by_plant AS (SELECT f.material_id, f.plant_id, f.forecast_qty - COALESCE(i.available_qty, 0) AS inventory_gap FROM forecast f LEFT JOIN inventory i ON f.material_id = i.material_id AND f.plant_id = i.plant_id), gap_by_material AS (SELECT material_id, SUM(inventory_gap) AS inventory_gap FROM gap_by_plant GROUP BY material_id) SELECT m.material_nm, g.inventory_gap FROM gap_by_material g JOIN dim_material m ON g.material_id = m.material_id WHERE m.material_type_cd = 'FG' ORDER BY g.inventory_gap DESC LIMIT 1;"
+    },
+    {
+      "id": "L4_002",
+      "question": "2025年第一季度，每个月有效订单金额最高的客户是谁？请返回月份、客户名称和金额。",
+      "difficulty": "L4",
+      "pattern": "top1_per_group_with_partition",
+      "intent_tags": [
+        "window_function",
+        "topn_by_group",
+        "business_rule"
+      ],
+      "sql_features": [
+        "window_function",
+        "partition",
+        "group_by"
+      ],
+      "tables": [
+        "fact_sales_order_hdr",
+        "fact_sales_order_line",
+        "code_sales_order_status",
+        "dim_customer"
+      ],
+      "join_paths": [
+        "fact_sales_order_hdr.sales_order_id = fact_sales_order_line.sales_order_id",
+        "fact_sales_order_hdr.sales_order_status_cd = code_sales_order_status.sales_order_status_cd",
+        "fact_sales_order_hdr.customer_id = dim_customer.customer_id"
+      ],
+      "sql": "WITH customer_month_amt AS (SELECT substr(h.order_date_key, 1, 6) AS month_key, h.customer_id, SUM(l.net_amt) AS order_amt FROM fact_sales_order_hdr h JOIN fact_sales_order_line l ON h.sales_order_id = l.sales_order_id JOIN code_sales_order_status s ON h.sales_order_status_cd = s.sales_order_status_cd WHERE h.order_date_key BETWEEN '20250101' AND '20250331' AND s.is_valid_order = 1 GROUP BY substr(h.order_date_key, 1, 6), h.customer_id), ranked AS (SELECT month_key, customer_id, order_amt, ROW_NUMBER() OVER (PARTITION BY month_key ORDER BY order_amt DESC) AS rn FROM customer_month_amt) SELECT r.month_key, c.customer_nm, r.order_amt FROM ranked r JOIN dim_customer c ON r.customer_id = c.customer_id WHERE r.rn = 1 ORDER BY r.month_key;"
+    },
+    {
+      "id": "L4_003",
+      "question": "2025年3月，哪些供应商存在平均综合评分低于本月全体供应商平均值的情况？请返回供应商名称和综合评分。",
+      "difficulty": "L4",
+      "pattern": "compare_group_metric_to_global_average",
+      "intent_tags": [
+        "correlated_subquery",
+        "supplier_analysis"
+      ],
+      "sql_features": [
+        "subquery",
+        "aggregation",
+        "comparison"
+      ],
+      "tables": [
+        "fact_supplier_score_mth",
+        "dim_supplier"
+      ],
+      "join_paths": [
+        "fact_supplier_score_mth.supplier_id = dim_supplier.supplier_id"
+      ],
+      "sql": "WITH monthly_avg AS (SELECT AVG(score_total) AS avg_score FROM fact_supplier_score_mth WHERE month_key = '202503'), supplier_score AS (SELECT supplier_id, AVG(score_total) AS score_total FROM fact_supplier_score_mth WHERE month_key = '202503' GROUP BY supplier_id) SELECT s.supplier_nm, ss.score_total FROM supplier_score ss JOIN dim_supplier s ON ss.supplier_id = s.supplier_id CROSS JOIN monthly_avg ma WHERE ss.score_total < ma.avg_score ORDER BY ss.score_total ASC;"
+    },
+    {
+      "id": "L4_004",
+      "question": "2025年3月，哪些售后案例仍未关闭且索赔金额超过当月售后案例平均索赔金额？请返回案例号和索赔金额。",
+      "difficulty": "L4",
+      "pattern": "wide_table_filter_compare_average",
+      "intent_tags": [
+        "wide_table",
+        "correlated_subquery"
+      ],
+      "sql_features": [
+        "wide_table",
+        "subquery",
+        "filter"
+      ],
+      "tables": [
+        "wide_after_sale_case"
+      ],
+      "join_paths": [],
+      "sql": "WITH month_avg AS (SELECT AVG(claim_amt) AS avg_claim_amt FROM wide_after_sale_case WHERE open_dt_key BETWEEN '20250301' AND '20250331') SELECT case_id, claim_amt FROM wide_after_sale_case, month_avg WHERE open_dt_key BETWEEN '20250301' AND '20250331' AND case_status_cd <> 'CLOSED' AND claim_amt > avg_claim_amt ORDER BY claim_amt DESC;"
+    },
+    {
+      "id": "L4_005",
+      "question": "2025年3月，每个客户细分中订单金额最高的物料系列是什么？请返回客户细分、物料系列和金额。",
+      "difficulty": "L4",
+      "pattern": "topn_per_group_multi_hop",
+      "intent_tags": [
+        "multi_hop_join",
+        "window_function"
+      ],
+      "sql_features": [
+        "join",
+        "group_by",
+        "window_function",
+        "partition"
+      ],
+      "tables": [
+        "fact_sales_order_hdr",
+        "fact_sales_order_line",
+        "code_sales_order_status",
+        "dim_customer",
+        "dim_material"
+      ],
+      "join_paths": [
+        "fact_sales_order_hdr.sales_order_id = fact_sales_order_line.sales_order_id",
+        "fact_sales_order_hdr.sales_order_status_cd = code_sales_order_status.sales_order_status_cd",
+        "fact_sales_order_hdr.customer_id = dim_customer.customer_id",
+        "fact_sales_order_line.material_id = dim_material.material_id"
+      ],
+      "sql": "WITH seg_family_amt AS (SELECT c.cust_segment_cd, m.prod_family_cd, SUM(l.net_amt) AS order_amt FROM fact_sales_order_hdr h JOIN fact_sales_order_line l ON h.sales_order_id = l.sales_order_id JOIN code_sales_order_status s ON h.sales_order_status_cd = s.sales_order_status_cd JOIN dim_customer c ON h.customer_id = c.customer_id JOIN dim_material m ON l.material_id = m.material_id WHERE h.order_date_key BETWEEN '20250301' AND '20250331' AND s.is_valid_order = 1 GROUP BY c.cust_segment_cd, m.prod_family_cd), ranked AS (SELECT cust_segment_cd, prod_family_cd, order_amt, ROW_NUMBER() OVER (PARTITION BY cust_segment_cd ORDER BY order_amt DESC) AS rn FROM seg_family_amt) SELECT cust_segment_cd, prod_family_cd, order_amt FROM ranked WHERE rn = 1 ORDER BY cust_segment_cd;"
+    }
+  ]
+}

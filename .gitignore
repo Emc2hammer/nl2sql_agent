@@ -1,0 +1,44 @@
+# Environment variables (contains API keys, secrets)
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+*.egg
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# Local vector database storage
+backend/qdrant_storage/
+
+# Local SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Local benchmark/run outputs
+question_bank_results*.json

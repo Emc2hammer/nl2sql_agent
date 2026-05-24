@@ -1,0 +1,7 @@
+﻿supplier_id,supplier_nm,supplier_class_cd,region_cd,on_time_target,buyer_nm,payment_term_day,supplier_status_cd,tax_region_cd
+SUP_001,沪东电子,A,EAST,0.96,BUYER_A,60,ACTIVE,CN
+SUP_002,星联结构件,A,EAST,0.95,BUYER_A,60,ACTIVE,CN
+SUP_003,南海线束,B,SOUTH,0.94,BUYER_A,60,ACTIVE,CN
+SUP_004,瑞诚包装,C,SOUTH,0.92,BUYER_A,60,ACTIVE,CN
+SUP_005,科元传感,B,NORTH,0.93,BUYER_A,60,ACTIVE,CN
+SUP_006,宏达辅材,C,WEST,0.9,BUYER_A,60,ACTIVE,CN

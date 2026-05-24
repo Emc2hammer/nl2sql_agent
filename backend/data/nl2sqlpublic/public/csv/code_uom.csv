@@ -1,0 +1,4 @@
+﻿uom_cd,uom_nm,uom_group_cd,decimal_precision
+EA,个,QTY,0
+SET,套,QTY,0
+KG,千克,QTY,0

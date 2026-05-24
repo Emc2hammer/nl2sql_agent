@@ -1,0 +1,9 @@
+﻿addr_id,customer_id,city_nm,province_nm,is_primary_addr,postcode,country_nm,addr_type_cd
+1,CUS_001,上海,上海,1,200000,CN,SHIP
+2,CUS_002,深圳,广东,1,200000,CN,SHIP
+3,CUS_003,天津,天津,1,200000,CN,SHIP
+4,CUS_004,苏州,江苏,1,200000,CN,SHIP
+5,CUS_005,广州,广东,1,200000,CN,SHIP
+6,CUS_006,成都,四川,1,200000,CN,SHIP
+7,CUS_007,青岛,山东,1,200000,CN,SHIP
+8,CUS_008,宁波,浙江,1,200000,CN,SHIP

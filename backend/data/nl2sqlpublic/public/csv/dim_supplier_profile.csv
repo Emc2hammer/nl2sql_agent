@@ -1,0 +1,7 @@
+﻿supplier_id,legal_entity_nm,tax_reg_no,quality_cert_cd,compliance_level_cd,contract_signed_dt_key,category_mgr_nm,esg_rating_cd
+SUP_001,沪东电子股份有限公司,TAXS00001,ISO9001,L2,20240101,CM001,B
+SUP_002,星联结构件股份有限公司,TAXS00002,ISO9001,L2,20240101,CM002,B
+SUP_003,南海线束股份有限公司,TAXS00003,ISO9001,L2,20240101,CM003,B
+SUP_004,瑞诚包装股份有限公司,TAXS00004,ISO9001,L2,20240101,CM004,B
+SUP_005,科元传感股份有限公司,TAXS00005,ISO9001,L2,20240101,CM005,B
+SUP_006,宏达辅材股份有限公司,TAXS00006,ISO9001,L2,20240101,CM006,B

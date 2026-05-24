@@ -1,0 +1,5 @@
+﻿sales_order_status_cd,sales_order_status_nm,is_valid_order,lifecycle_stage_cd,display_seq
+NEW,新建,1,OPEN,10
+REL,已确认,1,OPEN,10
+SHP,已发货,1,OPEN,10
+CNL,已取消,0,OPEN,10

@@ -1,0 +1,84 @@
+[
+  {
+    "name": "有效订单",
+    "keywords": ["有效订单", "有效销售订单"],
+    "condition": "code_sales_order_status.is_valid_order = 1",
+    "required_joins": [
+      "fact_sales_order_hdr.sales_order_status_cd = code_sales_order_status.sales_order_status_cd"
+    ],
+    "note": "Use the status code table to identify valid sales orders; do not infer validity from status text alone."
+  },
+  {
+    "name": "第一季度",
+    "keywords": ["第一季度", "一季度", "q1", "Q1"],
+    "condition": "date key range is between '20250101' and '20250331' for 2025 Q1",
+    "required_joins": [],
+    "note": "Date keys are TEXT in YYYYMMDD format. Use string comparisons on *_date_key or *_dt_key columns."
+  },
+  {
+    "name": "2025年3月",
+    "keywords": ["2025年3月", "3月"],
+    "condition": "date key range is between '20250301' and '20250331'",
+    "required_joins": [],
+    "note": "Date keys are TEXT in YYYYMMDD format."
+  },
+  {
+    "name": "最近N天",
+    "keywords": ["最近十天", "近十天", "最近10天", "近10天", "最近7天", "近7天"],
+    "condition": "Use the maximum date key in the relevant fact table as the end date, not the current system date.",
+    "required_joins": [],
+    "note": "Date keys are TEXT in YYYYMMDD format. For ten days, use date(max_date, '-9 day') after converting YYYYMMDD to YYYY-MM-DD, or compare an explicit derived range."
+  },
+  {
+    "name": "最新价格",
+    "keywords": ["最新价格", "最新售价", "标准售价", "价格"],
+    "condition": "Use the latest fact_price_book.eff_start_dt that is not later than the target date.",
+    "required_joins": [
+      "fact_price_book.material_id = dim_material.material_id"
+    ],
+    "note": "For latest record, filter by MAX(eff_start_dt) under the target date."
+  },
+  {
+    "name": "可用库存",
+    "keywords": ["可用库存", "库存缺口", "缺口"],
+    "condition": "available inventory = SUM(fact_inv_balance_snap.on_hand_qty - fact_inv_balance_snap.alloc_qty)",
+    "required_joins": [
+      "fact_inv_balance_snap.material_id = dim_material.material_id",
+      "fact_inv_balance_snap.wh_id = dim_wh.wh_id",
+      "fact_forecast_mth.plant_id = dim_wh.plant_id"
+    ],
+    "note": "For inventory gap, aggregate forecast by material_id + plant_id, aggregate inventory by material_id + plant_id through dim_wh, then join the two aggregates. Do not directly join forecast and inventory only by material_id because it multiplies rows across plants/warehouses."
+  },
+  {
+    "name": "高风险履约订单",
+    "keywords": ["高风险", "高风险订单", "履约风险"],
+    "condition": "wide_order_fulfillment_dly.delivery_risk_cd = 'HIGH'",
+    "required_joins": [],
+    "note": "Use wide_order_fulfillment_dly when the question is about fulfillment risk."
+  },
+  {
+    "name": "高置信度订单",
+    "keywords": ["高置信度", "置信度"],
+    "condition": "There is no confidence score column. Do not invent confidence_score.",
+    "required_joins": [],
+    "note": "If the user means reliable/low-risk orders, use wide_order_fulfillment_dly.delivery_risk_cd = 'LOW'."
+  },
+  {
+    "name": "当前BOM",
+    "keywords": ["当前BOM", "当前 bom", "BOM版本", "组件"],
+    "condition": "dim_bom_hdr.is_current_ver = 1",
+    "required_joins": [
+      "dim_bom_hdr.parent_material_id = parent_material.material_id",
+      "bridge_bom_component.bom_id = dim_bom_hdr.bom_id",
+      "bridge_bom_component.component_material_id = component_material.material_id"
+    ],
+    "note": "Use dim_material twice with aliases: parent_material for the finished product and component_material for each component. Filter A100 on parent_material.material_sku = 'FG-A100' or parent_material.material_nm LIKE '%智能控制器A100%'. Do not require component_material_id to equal the parent material id."
+  },
+  {
+    "name": "取消订单",
+    "keywords": ["取消订单", "被取消", "已取消"],
+    "condition": "fact_sales_order_hdr.sales_order_status_cd = 'CNL' or wide_order_fulfillment_dly.order_status_cd = 'CNL'",
+    "required_joins": [],
+    "note": "Use CNL for cancelled sales orders."
+  }
+]

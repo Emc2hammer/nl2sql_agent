@@ -1,0 +1,5 @@
+﻿workshop_id,plant_id,workshop_nm,workshop_type_cd,floor_no,workshop_mgr_nm,cost_center_cd
+WS_A1,PLT_EAST,机加一车间,MACH,1,WS_TEAM,CC1001
+WS_A2,PLT_EAST,总装二车间,ASM,1,WS_TEAM,CC1001
+WS_B1,PLT_SOUTH,精装一车间,ASM,1,WS_TEAM,CC1001
+WS_B2,PLT_SOUTH,质检车间,QA,1,WS_TEAM,CC1001

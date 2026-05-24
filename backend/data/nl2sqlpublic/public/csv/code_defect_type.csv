@@ -1,0 +1,5 @@
+﻿defect_type_cd,defect_type_nm,severity_cd,defect_group_cd,display_seq
+DF01,外观不良,M,QUALITY,10
+DF02,尺寸偏差,H,QUALITY,10
+DF03,功能异常,H,QUALITY,10
+DF04,包装破损,L,QUALITY,10

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "TopN",
+    "keywords": ["前3", "前5", "最高", "最低", "排名", "top"],
+    "description": "Aggregate if needed, ORDER BY metric DESC or ASC, then LIMIT N.",
+    "template_hint": "SELECT dimension, metric FROM ... GROUP BY dimension ORDER BY metric DESC LIMIT N"
+  },
+  {
+    "name": "每组TopN",
+    "keywords": ["每个", "分别最高", "各自最高", "每个客户细分中"],
+    "description": "Use ROW_NUMBER() OVER (PARTITION BY group_dimension ORDER BY metric DESC) and filter rn = 1 or rn <= N.",
+    "template_hint": "WITH ranked AS (SELECT ..., ROW_NUMBER() OVER (PARTITION BY group_col ORDER BY metric DESC) rn FROM ...) SELECT ... FROM ranked WHERE rn <= N"
+  },
+  {
+    "name": "环比增长",
+    "keywords": ["环比", "增长", "相比", "月环比"],
+    "description": "Aggregate each period first, then self-join or use LAG to compute period-over-period difference.",
+    "template_hint": "WITH monthly AS (... GROUP BY month, dimension), diff AS (... current.metric - previous.metric ...) SELECT ..."
+  },
+  {
+    "name": "最新记录",
+    "keywords": ["最新", "最新生效", "最新价格"],
+    "description": "Filter to the maximum effective date not later than the target date, often using a scalar subquery or ranked CTE.",
+    "template_hint": "WHERE eff_start_dt = (SELECT MAX(eff_start_dt) FROM same_table WHERE eff_start_dt <= target_date AND keys match)"
+  },
+  {
+    "name": "事实表先聚合再JOIN",
+    "keywords": ["总", "合计", "平均", "数量", "金额", "PPM", "拒收率", "缺口", "可用库存", "预测量"],
+    "description": "Aggregate large fact tables in a CTE before joining dimension tables when grouping by business names.",
+    "template_hint": "WITH agg AS (SELECT key, SUM(metric) metric FROM fact GROUP BY key) SELECT dim.name, agg.metric FROM agg JOIN dim ..."
+  },
+  {
+    "name": "相关子查询",
+    "keywords": ["超过当月", "低于本月全体", "平均值", "仍未关闭"],
+    "description": "Use CTEs for global or monthly averages, then join/filter against the derived threshold.",
+    "template_hint": "WITH base AS (...), threshold AS (... AVG(metric) ... GROUP BY period) SELECT ... FROM base JOIN threshold ..."
+  }
+]

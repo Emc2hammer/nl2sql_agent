@@ -1,0 +1,3 @@
+﻿shift_cd,shift_nm,shift_seq,start_hhmm,end_hhmm,shift_type_cd
+D1,白班,1,08:00,16:00,REG
+D2,晚班,2,08:00,16:00,REG
