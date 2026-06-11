@@ -1,5 +1,0 @@
-﻿wh_id,plant_id,wh_nm,wh_type_cd,wh_mgr_nm,temp_ctrl_fg,throughput_class_cd
-WH_E_RM,PLT_EAST,华东原料仓,RM,WH_TEAM,0,M
-WH_E_FG,PLT_EAST,华东成品仓,FG,WH_TEAM,0,M
-WH_S_RM,PLT_SOUTH,华南原料仓,RM,WH_TEAM,0,M
-WH_S_FG,PLT_SOUTH,华南成品仓,FG,WH_TEAM,0,M

@@ -1,5 +1,0 @@
-﻿work_order_status_cd,work_order_status_nm,is_active_order,display_seq,is_reportable
-REL,已下达,1,10,1
-CMP,已完工,1,10,1
-HOLD,暂停,1,10,1
-CNL,已取消,0,10,1

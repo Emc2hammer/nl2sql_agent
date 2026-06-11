@@ -1,7 +1,0 @@
-﻿alias_id,material_id,alias_type_cd,alias_value,lang_cd,is_preferred_alias
-1,MAT_FG_1001,SHORT,A100控制器,zh-CN,0
-2,MAT_FG_1001,LEGACY,controller_a100,zh-CN,0
-3,MAT_FG_1002,SHORT,A200控制器,zh-CN,0
-4,MAT_FG_1003,SHORT,B100网关,zh-CN,0
-5,MAT_RM_2001,SHORT,控制板,zh-CN,0
-6,MAT_RM_2006,SHORT,主控IC,zh-CN,0

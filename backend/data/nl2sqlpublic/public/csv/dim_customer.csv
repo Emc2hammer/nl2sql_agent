@@ -1,9 +1,0 @@
-﻿customer_id,customer_nm,cust_segment_cd,region_cd,credit_grade_cd,sales_rep_nm,invoice_term_day,channel_cd,customer_tier_cd
-CUS_001,华联工业,KA,EAST,A,TEAM_A,30,DIRECT,T2
-CUS_002,锐虎机电,KA,SOUTH,A,TEAM_A,30,DIRECT,T2
-CUS_003,协同设备,SMB,NORTH,B,TEAM_A,30,DIRECT,T2
-CUS_004,嘉远科技,SMB,EAST,B,TEAM_A,30,DIRECT,T2
-CUS_005,拓达能源,DIST,SOUTH,A,TEAM_A,30,DIRECT,T2
-CUS_006,盛禾自动化,DIST,WEST,B,TEAM_A,30,DIRECT,T2
-CUS_007,华盛集成,KA,NORTH,A,TEAM_A,30,DIRECT,T2
-CUS_008,云启装备,SMB,EAST,C,TEAM_A,30,DIRECT,T2

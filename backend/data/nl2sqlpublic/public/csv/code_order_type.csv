@@ -1,4 +1,0 @@
-﻿order_type_cd,order_type_nm,priority_rank,channel_cd
-STD,标准订单,1,DIRECT
-RPL,补货订单,1,DIRECT
-EXP,加急订单,1,DIRECT

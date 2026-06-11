@@ -1,5 +1,0 @@
-﻿bin_id,wh_id,zone_cd,bin_status_cd,temp_zone_cd,max_pallet_qty,pick_path_seq
-BIN_E_RM_A,WH_E_RM,A,AVL,AMB,20,1
-BIN_E_FG_A,WH_E_FG,A,AVL,AMB,20,1
-BIN_S_RM_A,WH_S_RM,A,AVL,AMB,20,1
-BIN_S_FG_A,WH_S_FG,A,AVL,AMB,20,1

@@ -1,5 +1,0 @@
-﻿inv_txn_type_cd,inv_txn_type_nm,direction_cd,impact_stock_fg,display_seq
-RCV,采购收货,IN,1,10
-ISS,生产领料,OUT,1,10
-ADJ,库存调整,NA,1,10
-SHP,销售出库,OUT,1,10
